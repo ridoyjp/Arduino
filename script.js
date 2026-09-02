@@ -1,9 +1,8 @@
 "use strict";
 
 document.addEventListener("DOMContentLoaded", () => {
-
   /* =========================================================
-     BASIC SELECTORS
+     HELPERS
   ========================================================= */
 
   const $ = (selector, parent = document) =>
@@ -14,14 +13,35 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
   /* =========================================================
-     PAGE LOADED
+     PAGE READY
   ========================================================= */
 
   document.documentElement.classList.add("js");
 
-  window.addEventListener("load", () => {
-    document.body.classList.add("page-loaded");
-  });
+  const handlePageLoad = () => {
+    document.body.classList.add("page-loaded", "site-ready");
+
+    const header = $(".header");
+    if (header) {
+      header.classList.add("header-open");
+    }
+
+    const hero =
+      $(".profile-hero") ||
+      $(".hero");
+
+    if (hero) {
+      hero.classList.add("hero-open");
+    }
+  };
+
+  if (document.readyState === "complete") {
+    handlePageLoad();
+  } else {
+    window.addEventListener("load", handlePageLoad, {
+      once: true
+    });
+  }
 
 
   /* =========================================================
@@ -43,8 +63,13 @@ document.addEventListener("DOMContentLoaded", () => {
     menuBtn.addEventListener("click", () => {
       const isOpen = nav.classList.toggle("open");
 
-      menuBtn.setAttribute("aria-expanded", String(isOpen));
-      menuBtn.textContent = isOpen ? "✕" : "☰";
+      menuBtn.setAttribute(
+        "aria-expanded",
+        String(isOpen)
+      );
+
+      menuBtn.textContent =
+        isOpen ? "✕" : "☰";
     });
 
     $$("a", nav).forEach((link) => {
@@ -62,97 +87,185 @@ document.addEventListener("DOMContentLoaded", () => {
   const updateHeader = () => {
     if (!header) return;
 
-    header.classList.toggle("scrolled", window.scrollY > 30);
+    header.classList.toggle(
+      "scrolled",
+      window.scrollY > 30
+    );
   };
 
   updateHeader();
 
-  window.addEventListener("scroll", updateHeader, {
-    passive: true
-  });
+  window.addEventListener(
+    "scroll",
+    updateHeader,
+    { passive: true }
+  );
+
+
+  /* =========================================================
+     SCROLL PROGRESS BAR
+  ========================================================= */
+
+  const progress =
+    $(".scroll-progress") ||
+    $("#progress");
+
+  const updateProgress = () => {
+    if (!progress) return;
+
+    const scrollTop =
+      window.scrollY;
+
+    const scrollHeight =
+      document.documentElement.scrollHeight -
+      window.innerHeight;
+
+    const percent =
+      scrollHeight > 0
+        ? (scrollTop / scrollHeight) * 100
+        : 0;
+
+    progress.style.width =
+      `${Math.min(percent, 100)}%`;
+  };
+
+  updateProgress();
+
+  window.addEventListener(
+    "scroll",
+    updateProgress,
+    { passive: true }
+  );
+
+
+  /* =========================================================
+     BACK TO TOP
+  ========================================================= */
+
+  const backToTop =
+    $("#backToTop");
+
+  const updateBackToTop = () => {
+    if (!backToTop) return;
+
+    backToTop.classList.toggle(
+      "show",
+      window.scrollY > 500
+    );
+  };
+
+  updateBackToTop();
+
+  window.addEventListener(
+    "scroll",
+    updateBackToTop,
+    { passive: true }
+  );
+
+  if (backToTop) {
+    backToTop.addEventListener(
+      "click",
+      () => {
+        window.scrollTo({
+          top: 0,
+          behavior: "smooth"
+        });
+      }
+    );
+  }
 
 
   /* =========================================================
      SMOOTH SCROLL
   ========================================================= */
 
-  $$('a[href^="#"]').forEach((link) => {
+  $$('a[href^="#"]').forEach(
+    (link) => {
+      link.addEventListener(
+        "click",
+        (event) => {
+          const targetId =
+            link.getAttribute("href");
 
-    link.addEventListener("click", (event) => {
+          if (
+            !targetId ||
+            targetId === "#"
+          ) {
+            return;
+          }
 
-      const targetId = link.getAttribute("href");
+          const target =
+            $(targetId);
 
-      if (!targetId || targetId === "#") return;
+          if (!target) return;
 
-      const target = $(targetId);
+          event.preventDefault();
 
-      if (!target) return;
+          const headerHeight =
+            header
+              ? header.offsetHeight
+              : 0;
 
-      event.preventDefault();
+          const targetPosition =
+            target.getBoundingClientRect().top +
+            window.scrollY -
+            headerHeight -
+            10;
 
-      const headerHeight = header
-        ? header.offsetHeight
-        : 0;
+          window.scrollTo({
+            top: targetPosition,
+            behavior: "smooth"
+          });
 
-      const targetPosition =
-        target.getBoundingClientRect().top +
-        window.scrollY -
-        headerHeight -
-        10;
-
-      window.scrollTo({
-        top: targetPosition,
-        behavior: "smooth"
-      });
-
-      closeMenu();
-
-    });
-
-  });
+          closeMenu();
+        }
+      );
+    }
+  );
 
 
   /* =========================================================
      ACTIVE NAVIGATION
   ========================================================= */
 
-  const sections = $$("main section");
-  const navLinks = nav ? $$("a", nav) : [];
+  const sections =
+    $$("main section[id]");
+
+  const navLinks =
+    nav ? $$('a[href^="#"]', nav) : [];
 
   const updateActiveNav = () => {
-
-    if (!sections.length || !navLinks.length) return;
+    if (
+      !sections.length ||
+      !navLinks.length
+    ) {
+      return;
+    }
 
     let currentId = "";
 
     sections.forEach((section) => {
-
-      const sectionTop =
+      const top =
         section.offsetTop - 180;
 
-      const sectionBottom =
-        sectionTop + section.offsetHeight;
+      const bottom =
+        top + section.offsetHeight;
 
       if (
-        window.scrollY >= sectionTop &&
-        window.scrollY < sectionBottom
+        window.scrollY >= top &&
+        window.scrollY < bottom
       ) {
         currentId = section.id;
       }
-
     });
 
     navLinks.forEach((link) => {
-
-      const href = link.getAttribute("href");
-
       link.classList.toggle(
         "current",
-        href === `#${currentId}`
+        link.getAttribute("href") ===
+          `#${currentId}`
       );
-
     });
-
   };
 
   updateActiveNav();
@@ -165,392 +278,305 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
   /* =========================================================
-     SCROLL REVEAL
+     SINGLE ULTRA SMOOTH SCROLL REVEAL
+     ONE OBSERVER ONLY - NO DUPLICATE
   ========================================================= */
 
-  const revealElements = $$(".reveal");
+  const animatedElements = $$(
+    ".reveal, .reveal-left, .reveal-right, " +
+    ".reveal-zoom, .scroll-animate, " +
+    ".scroll-left, .scroll-right"
+  );
 
-  const revealElement = (element) => {
-    element.classList.add("active", "visible");
+  const showElement = (element) => {
+    element.classList.add(
+      "active",
+      "visible",
+      "is-visible",
+      "show"
+    );
   };
 
-  if ("IntersectionObserver" in window) {
+  if (
+    "IntersectionObserver" in window &&
+    animatedElements.length
+  ) {
+    const animationObserver =
+      new IntersectionObserver(
+        (entries, observer) => {
+          entries.forEach((entry) => {
+            if (!entry.isIntersecting) {
+              return;
+            }
 
-    const revealObserver = new IntersectionObserver(
-      (entries, observer) => {
+            requestAnimationFrame(() => {
+              showElement(entry.target);
+            });
 
-        entries.forEach((entry) => {
+            observer.unobserve(entry.target);
+          });
+        },
+        {
+          threshold: 0.12,
+          rootMargin: "0px 0px -50px 0px"
+        }
+      );
 
-          if (!entry.isIntersecting) return;
-
-          revealElement(entry.target);
-          observer.unobserve(entry.target);
-
-        });
-
-      },
-      {
-        threshold: 0.12,
-        rootMargin: "0px 0px -40px 0px"
-      }
-    );
-
-    revealElements.forEach((element) => {
-      revealObserver.observe(element);
+    animatedElements.forEach((element) => {
+      animationObserver.observe(element);
     });
 
   } else {
-
-    revealElements.forEach(revealElement);
-
+    animatedElements.forEach(showElement);
   }
-
-
-  /* =========================================================
-     REVEAL ZOOM
-  ========================================================= */
-
-  const zoomElements = $$(".reveal-zoom");
-
-  const revealZoom = (element) => {
-    element.classList.add("is-visible");
-  };
-
-  if ("IntersectionObserver" in window) {
-
-    const zoomObserver = new IntersectionObserver(
-      (entries, observer) => {
-
-        entries.forEach((entry) => {
-
-          if (!entry.isIntersecting) return;
-
-          revealZoom(entry.target);
-          observer.unobserve(entry.target);
-
-        });
-
-      },
-      {
-        threshold: 0.12,
-        rootMargin: "0px 0px -40px 0px"
-      }
-    );
-
-    zoomElements.forEach((element) => {
-      zoomObserver.observe(element);
-    });
-
-  } else {
-
-    zoomElements.forEach(revealZoom);
-
-  }
-
-
-  /* =========================================================
-     SAFETY FALLBACK
-     Content never remains hidden
-  ========================================================= */
-
-  setTimeout(() => {
-
-    revealElements.forEach(revealElement);
-    zoomElements.forEach(revealZoom);
-
-  }, 1500);
 
 
   /* =========================================================
      TYPING TEXT
   ========================================================= */
 
- /* =========================================================
-   TYPING TEXT
-   Text change হলেও RIGHT PHOTO MOVE হবে না
-========================================================= */
+  const typingText =
+    $("#typingText");
 
-const typingText = $("#typingText");
+  if (typingText) {
+    const words =
+      (typingText.dataset.texts || "")
+        .split("|")
+        .map((text) => text.trim())
+        .filter(Boolean);
 
-if (typingText) {
+    if (words.length > 0) {
+      let wordIndex = 0;
+      let charIndex = 0;
+      let isDeleting = false;
 
-  const words = (typingText.dataset.texts || "")
-    .split("|")
-    .map((text) => text.trim())
-    .filter(Boolean);
+      const type = () => {
+        const currentWord =
+          words[wordIndex];
 
-  if (words.length > 0) {
+        typingText.textContent =
+          currentWord.substring(
+            0,
+            charIndex
+          );
 
-    /*
-      Longest text-এর width calculate করা হচ্ছে।
-      তাই auto typing-এর text ছোট/বড় হলেও
-      layout বারবার resize হবে না।
-    */
-    const measureText = document.createElement("span");
+        let speed = 80;
 
-    measureText.style.position = "absolute";
-    measureText.style.visibility = "hidden";
-    measureText.style.whiteSpace = "nowrap";
-    measureText.style.pointerEvents = "none";
-
-    const computedStyle = window.getComputedStyle(typingText);
-
-    measureText.style.fontFamily = computedStyle.fontFamily;
-    measureText.style.fontSize = computedStyle.fontSize;
-    measureText.style.fontWeight = computedStyle.fontWeight;
-    measureText.style.letterSpacing = computedStyle.letterSpacing;
-
-    document.body.appendChild(measureText);
-
-    let maxWidth = 0;
-
-    words.forEach((word) => {
-      measureText.textContent = word;
-      maxWidth = Math.max(maxWidth, measureText.offsetWidth);
-    });
-
-    measureText.remove();
-
-    /*
-      Desktop layout stable রাখা।
-      CSS-এর max-width-এর বেশি হলে parent অনুযায়ী থাকবে।
-    */
-    typingText.style.setProperty(
-      "--typing-max-width",
-      `${Math.ceil(maxWidth + 20)}px`
-    );
-
-
-    let wordIndex = 0;
-    let charIndex = 0;
-    let isDeleting = false;
-
-    const type = () => {
-
-      const currentWord = words[wordIndex];
-
-      typingText.textContent =
-        currentWord.substring(0, charIndex);
-
-      let speed = 80;
-
-      if (!isDeleting) {
-
-        if (charIndex < currentWord.length) {
-
-          charIndex++;
-          speed = 80;
-
+        if (!isDeleting) {
+          if (
+            charIndex <
+            currentWord.length
+          ) {
+            charIndex++;
+            speed = 80;
+          } else {
+            isDeleting = true;
+            speed = 1800;
+          }
         } else {
+          if (charIndex > 0) {
+            charIndex--;
+            speed = 40;
+          } else {
+            isDeleting = false;
 
-          isDeleting = true;
-          speed = 1800;
+            wordIndex =
+              (wordIndex + 1) %
+              words.length;
 
+            speed = 350;
+          }
         }
 
-      } else {
+        setTimeout(type, speed);
+      };
 
-        if (charIndex > 0) {
-
-          charIndex--;
-          speed = 40;
-
-        } else {
-
-          isDeleting = false;
-
-          wordIndex =
-            (wordIndex + 1) % words.length;
-
-          speed = 350;
-
-        }
-
-      }
-
-      setTimeout(type, speed);
-
-    };
-
-    /*
-      প্রথম text শুরু হওয়ার আগে
-      fixed layout তৈরি করা
-    */
-    type();
-
+      type();
+    }
   }
 
-}
 
   /* =========================================================
      PROJECT FILTER
   ========================================================= */
 
-  const filterButtons = $$(".project-filter");
+  const filterButtons =
+    $$(".project-filter");
+
   const projectItems =
     $$(".portfolio-item[data-category]");
 
   filterButtons.forEach((button) => {
+    button.addEventListener(
+      "click",
+      () => {
+        const selectedFilter =
+          button.dataset.filter ||
+          "all";
 
-    button.addEventListener("click", () => {
+        filterButtons.forEach(
+          (filterButton) => {
+            const isActive =
+              filterButton === button;
 
-      const selectedFilter =
-        button.dataset.filter || "all";
+            filterButton.classList.toggle(
+              "is-active",
+              isActive
+            );
 
-      filterButtons.forEach((filterButton) => {
-
-        const isActive =
-          filterButton === button;
-
-        filterButton.classList.toggle(
-          "is-active",
-          isActive
+            filterButton.setAttribute(
+              "aria-pressed",
+              String(isActive)
+            );
+          }
         );
 
-        filterButton.setAttribute(
-          "aria-pressed",
-          String(isActive)
+        projectItems.forEach(
+          (project) => {
+            const category =
+              project.dataset.category;
+
+            const shouldShow =
+              selectedFilter === "all" ||
+              category === selectedFilter;
+
+            project.classList.toggle(
+              "is-hidden",
+              !shouldShow
+            );
+
+            project.setAttribute(
+              "aria-hidden",
+              String(!shouldShow)
+            );
+
+            if (shouldShow) {
+              project.classList.remove(
+                "active",
+                "visible",
+                "is-visible",
+                "show"
+              );
+
+              requestAnimationFrame(() => {
+                project.classList.add(
+                  "active",
+                  "visible",
+                  "is-visible",
+                  "show"
+                );
+              });
+            }
+          }
         );
-
-      });
-
-      projectItems.forEach((project) => {
-
-        const category =
-          project.dataset.category;
-
-        const shouldShow =
-          selectedFilter === "all" ||
-          category === selectedFilter;
-
-        project.classList.toggle(
-          "is-hidden",
-          !shouldShow
-        );
-
-        project.setAttribute(
-          "aria-hidden",
-          String(!shouldShow)
-        );
-
-        if (shouldShow) {
-
-          project.classList.remove("is-visible");
-
-          requestAnimationFrame(() => {
-            project.classList.add("is-visible");
-          });
-
-        }
-
-      });
-
-    });
-
+      }
+    );
   });
 
 
   /* =========================================================
-     PROJECT CARD OPEN
+     PROJECT CARD CLICK
   ========================================================= */
 
   const openProject = (card) => {
-
-    const url = card.dataset.link;
+    const url =
+      card.dataset.link;
 
     if (!url) return;
 
     if (/^https?:\/\//i.test(url)) {
-
       window.open(
         url,
         "_blank",
         "noopener,noreferrer"
       );
-
     } else {
-
       window.location.href = url;
-
     }
-
   };
 
-  $$(".portfolio-item[data-link]").forEach((card) => {
+  $$(".portfolio-item[data-link]").forEach(
+    (card) => {
+      card.addEventListener(
+        "click",
+        (event) => {
+          if (
+            event.target.closest(
+              "a, button"
+            )
+          ) {
+            return;
+          }
 
-    card.addEventListener("click", (event) => {
+          openProject(card);
+        }
+      );
 
-      if (
-        event.target.closest("a, button")
-      ) {
-        return;
-      }
+      card.addEventListener(
+        "keydown",
+        (event) => {
+          if (
+            event.key !== "Enter" &&
+            event.key !== " "
+          ) {
+            return;
+          }
 
-      openProject(card);
-
-    });
-
-    card.addEventListener("keydown", (event) => {
-
-      if (
-        event.key !== "Enter" &&
-        event.key !== " "
-      ) {
-        return;
-      }
-
-      event.preventDefault();
-
-      openProject(card);
-
-    });
-
-  });
+          event.preventDefault();
+          openProject(card);
+        }
+      );
+    }
+  );
 
 
   /* =========================================================
-     PROJECT GLOW POSITION
+     PROJECT MOUSE GLOW
   ========================================================= */
 
-  $$(".portfolio-item").forEach((card) => {
+  $$(".portfolio-item").forEach(
+    (card) => {
+      card.addEventListener(
+        "pointermove",
+        (event) => {
+          const rect =
+            card.getBoundingClientRect();
 
-    card.addEventListener("pointermove", (event) => {
+          const x =
+            ((event.clientX - rect.left) /
+              rect.width) *
+            100;
 
-      const rect =
-        card.getBoundingClientRect();
+          const y =
+            ((event.clientY - rect.top) /
+              rect.height) *
+            100;
 
-      const x =
-        ((event.clientX - rect.left) /
-          rect.width) * 100;
+          card.style.setProperty(
+            "--mouse-x",
+            `${x}%`
+          );
 
-      const y =
-        ((event.clientY - rect.top) /
-          rect.height) * 100;
-
-      card.style.setProperty(
-        "--mouse-x",
-        `${x}%`
+          card.style.setProperty(
+            "--mouse-y",
+            `${y}%`
+          );
+        }
       );
-
-      card.style.setProperty(
-        "--mouse-y",
-        `${y}%`
-      );
-
-    });
-
-  });
+    }
+  );
 
 
   /* =========================================================
      VIDEO MODAL
   ========================================================= */
 
-  const videoModal = $("#videoModal");
-  const videoPlayer = $("#projectVideo");
+  const videoModal =
+    $("#videoModal");
 
-  /* HTML has two .video-close buttons,
-     so we safely select all of them */
+  const videoPlayer =
+    $("#projectVideo");
+
   const videoCloseButtons =
     videoModal
       ? $$(".video-close", videoModal)
@@ -559,37 +585,60 @@ if (typingText) {
   let lastVideoTrigger = null;
 
 
-  const openProjectVideo = (source, trigger) => {
+  const openProjectVideo =
+    (source, trigger) => {
+      if (
+        !videoModal ||
+        !videoPlayer ||
+        !source
+      ) {
+        return;
+      }
 
-    if (
-      !videoModal ||
-      !videoPlayer ||
-      !source
-    ) {
-      return;
-    }
+      lastVideoTrigger =
+        trigger ||
+        document.activeElement;
 
-    lastVideoTrigger =
-      trigger || document.activeElement;
+      videoPlayer.pause();
+      videoPlayer.src = source;
 
-    videoPlayer.pause();
+      videoModal.classList.add(
+        "is-open"
+      );
 
-    videoPlayer.src = source;
-    videoPlayer.load();
+      videoModal.setAttribute(
+        "aria-hidden",
+        "false"
+      );
 
-    videoModal.classList.add("is-open");
-    videoModal.setAttribute(
-      "aria-hidden",
-      "false"
-    );
+      document.body.style.overflow =
+        "hidden";
 
-    document.body.style.overflow = "hidden";
+      videoPlayer.load();
 
-  };
+      const playVideo = () => {
+        videoPlayer.play().catch(() => {
+          console.log(
+            "Video autoplay blocked."
+          );
+        });
+      };
+
+      if (
+        videoPlayer.readyState >= 3
+      ) {
+        playVideo();
+      } else {
+        videoPlayer.addEventListener(
+          "canplay",
+          playVideo,
+          { once: true }
+        );
+      }
+    };
 
 
   const closeProjectVideo = () => {
-
     if (
       !videoModal ||
       !videoPlayer
@@ -599,11 +648,12 @@ if (typingText) {
 
     videoPlayer.pause();
     videoPlayer.currentTime = 0;
-
     videoPlayer.removeAttribute("src");
     videoPlayer.load();
 
-    videoModal.classList.remove("is-open");
+    videoModal.classList.remove(
+      "is-open"
+    );
 
     videoModal.setAttribute(
       "aria-hidden",
@@ -614,157 +664,155 @@ if (typingText) {
 
     if (
       lastVideoTrigger &&
-      typeof lastVideoTrigger.focus === "function"
+      typeof lastVideoTrigger.focus ===
+        "function"
     ) {
       lastVideoTrigger.focus();
     }
 
     lastVideoTrigger = null;
-
   };
 
 
-  /* Open buttons */
+  $$("[data-video]").forEach(
+    (button) => {
+      button.addEventListener(
+        "click",
+        (event) => {
+          event.preventDefault();
+          event.stopPropagation();
 
-  $$("[data-video]").forEach((button) => {
-
-    button.addEventListener("click", (event) => {
-
-      event.preventDefault();
-      event.stopPropagation();
-
-      openProjectVideo(
-        button.dataset.video,
-        button
+          openProjectVideo(
+            button.dataset.video,
+            button
+          );
+        }
       );
-
-    });
-
-  });
-
-
-  /* Close buttons */
-
-  videoCloseButtons.forEach((button) => {
-
-    button.addEventListener(
-      "click",
-      closeProjectVideo
-    );
-
-  });
-
-
-  /* Close when clicking outside */
-
-  videoModal?.addEventListener(
-    "click",
-    (event) => {
-
-      if (event.target === videoModal) {
-        closeProjectVideo();
-      }
-
     }
   );
 
 
-  /* ESC close */
+  videoCloseButtons.forEach(
+    (button) => {
+      button.addEventListener(
+        "click",
+        closeProjectVideo
+      );
+    }
+  );
+
+
+  if (videoModal) {
+    videoModal.addEventListener(
+      "click",
+      (event) => {
+        if (
+          event.target === videoModal
+        ) {
+          closeProjectVideo();
+        }
+      }
+    );
+  }
+
 
   document.addEventListener(
     "keydown",
     (event) => {
-
       if (
         event.key === "Escape" &&
-        videoModal?.classList.contains("is-open")
+        videoModal?.classList.contains(
+          "is-open"
+        )
       ) {
         closeProjectVideo();
       }
-
     }
   );
 
 
   /* =========================================================
-     VIDEO ERROR
+     RIPPLE EFFECT
   ========================================================= */
 
-  videoPlayer?.addEventListener("error", () => {
+  const createRipple =
+    (button, event) => {
+      const rect =
+        button.getBoundingClientRect();
 
-    console.error(
-      "Video could not be loaded:",
-      videoPlayer.currentSrc
-    );
+      const size =
+        Math.max(
+          rect.width,
+          rect.height
+        );
 
-  });
+      const ripple =
+        document.createElement("span");
 
+      ripple.className = "ripple";
 
-  /* =========================================================
-     PROJECT BUTTON RIPPLE
-  ========================================================= */
+      ripple.style.width =
+        `${size}px`;
 
-  const createRipple = (button, event) => {
+      ripple.style.height =
+        `${size}px`;
 
-    const rect =
-      button.getBoundingClientRect();
+      ripple.style.left =
+        `${
+          event.clientX -
+          rect.left -
+          size / 2
+        }px`;
 
-    const size =
-      Math.max(rect.width, rect.height);
+      ripple.style.top =
+        `${
+          event.clientY -
+          rect.top -
+          size / 2
+        }px`;
 
-    const ripple =
-      document.createElement("span");
+      button
+        .querySelector(".ripple")
+        ?.remove();
 
-    ripple.className = "ripple";
+      button.appendChild(ripple);
 
-    ripple.style.width = `${size}px`;
-    ripple.style.height = `${size}px`;
-
-    ripple.style.left =
-      `${event.clientX - rect.left - size / 2}px`;
-
-    ripple.style.top =
-      `${event.clientY - rect.top - size / 2}px`;
-
-    button.querySelector(".ripple")?.remove();
-
-    button.appendChild(ripple);
-
-    ripple.addEventListener(
-      "animationend",
-      () => ripple.remove()
-    );
-
-  };
+      ripple.addEventListener(
+        "animationend",
+        () => ripple.remove()
+      );
+    };
 
 
   $$(".project-btn, .project-play").forEach(
     (button) => {
-
-      button.addEventListener("click", (event) => {
-
-        createRipple(button, event);
-
-      });
-
+      button.addEventListener(
+        "click",
+        (event) => {
+          createRipple(
+            button,
+            event
+          );
+        }
+      );
     }
   );
 
 
   /* =========================================================
      CONTACT FORM
-     Opens default mail application
   ========================================================= */
 
-  const contactForm = $("#contactForm");
-  const formStatus = $("#formStatus");
+  const contactForm =
+    $("#contactForm");
+
+  const formStatus =
+    $("#formStatus");
 
   if (contactForm) {
-
     contactForm.addEventListener(
       "submit",
       (event) => {
-
         event.preventDefault();
 
         const name =
@@ -776,92 +824,51 @@ if (typingText) {
         const message =
           $("#message")?.value.trim() || "";
 
-
-        if (!name || !email || !message) {
-
+        if (
+          !name ||
+          !email ||
+          !message
+        ) {
           if (formStatus) {
-
             formStatus.textContent =
               "すべての必須項目を入力してください。";
 
             formStatus.className =
               "form-status error";
-
           }
 
           return;
-
         }
 
+        const subject =
+          encodeURIComponent(
+            `Portfolio Contact from ${name}`
+          );
 
-        const subject = encodeURIComponent(
-          `Portfolio Contact from ${name}`
-        );
-
-        const body = encodeURIComponent(
-          `お名前: ${name}\n` +
-          `メールアドレス: ${email}\n\n` +
-          `お問い合わせ内容:\n${message}`
-        );
-
+        const body =
+          encodeURIComponent(
+            `お名前: ${name}\n` +
+            `メールアドレス: ${email}\n\n` +
+            `お問い合わせ内容:\n${message}`
+          );
 
         if (formStatus) {
-
           formStatus.textContent =
             "メールアプリを開いています...";
 
           formStatus.className =
             "form-status success";
-
         }
-
 
         window.location.href =
           "mailto:mr25304046@ga.ttc.ac.jp" +
           `?subject=${subject}` +
           `&body=${body}`;
 
-
         setTimeout(() => {
-
           contactForm.reset();
-
         }, 500);
-
       }
     );
-
   }
-
-
-});
-
-/* =========================================================
-   ULTRA SMOOTH SCROLL REVEAL
-========================================================= */
-
-const scrollReveal = document.querySelectorAll(
-  ".reveal, .reveal-left, .reveal-right, .reveal-zoom"
-);
-
-const revealOnScroll = new IntersectionObserver(
-  (entries) => {
-    entries.forEach((entry) => {
-      if (entry.isIntersecting) {
-        requestAnimationFrame(() => {
-          entry.target.classList.add("active");
-        });
-
-        revealOnScroll.unobserve(entry.target);
-      }
-    });
-  },
-  {
-    threshold: 0.08,
-    rootMargin: "0px 0px -80px 0px"
-  }
-);
-
-scrollReveal.forEach((element) => {
-  revealOnScroll.observe(element);
 });
