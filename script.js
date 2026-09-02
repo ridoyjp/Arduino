@@ -19,9 +19,13 @@ document.addEventListener("DOMContentLoaded", () => {
   document.documentElement.classList.add("js");
 
   const handlePageLoad = () => {
-    document.body.classList.add("page-loaded", "site-ready");
+    document.body.classList.add(
+      "page-loaded",
+      "site-ready"
+    );
 
     const header = $(".header");
+
     if (header) {
       header.classList.add("header-open");
     }
@@ -38,9 +42,11 @@ document.addEventListener("DOMContentLoaded", () => {
   if (document.readyState === "complete") {
     handlePageLoad();
   } else {
-    window.addEventListener("load", handlePageLoad, {
-      once: true
-    });
+    window.addEventListener(
+      "load",
+      handlePageLoad,
+      { once: true }
+    );
   }
 
 
@@ -55,25 +61,37 @@ document.addEventListener("DOMContentLoaded", () => {
     if (!menuBtn || !nav) return;
 
     nav.classList.remove("open");
-    menuBtn.setAttribute("aria-expanded", "false");
+
+    menuBtn.setAttribute(
+      "aria-expanded",
+      "false"
+    );
+
     menuBtn.textContent = "☰";
   };
 
   if (menuBtn && nav) {
-    menuBtn.addEventListener("click", () => {
-      const isOpen = nav.classList.toggle("open");
+    menuBtn.addEventListener(
+      "click",
+      () => {
+        const isOpen =
+          nav.classList.toggle("open");
 
-      menuBtn.setAttribute(
-        "aria-expanded",
-        String(isOpen)
-      );
+        menuBtn.setAttribute(
+          "aria-expanded",
+          String(isOpen)
+        );
 
-      menuBtn.textContent =
-        isOpen ? "✕" : "☰";
-    });
+        menuBtn.textContent =
+          isOpen ? "✕" : "☰";
+      }
+    );
 
     $$("a", nav).forEach((link) => {
-      link.addEventListener("click", closeMenu);
+      link.addEventListener(
+        "click",
+        closeMenu
+      );
     });
   }
 
@@ -93,14 +111,6 @@ document.addEventListener("DOMContentLoaded", () => {
     );
   };
 
-  updateHeader();
-
-  window.addEventListener(
-    "scroll",
-    updateHeader,
-    { passive: true }
-  );
-
 
   /* =========================================================
      SCROLL PROGRESS BAR
@@ -113,8 +123,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const updateProgress = () => {
     if (!progress) return;
 
-    const scrollTop =
-      window.scrollY;
+    const scrollTop = window.scrollY;
 
     const scrollHeight =
       document.documentElement.scrollHeight -
@@ -128,14 +137,6 @@ document.addEventListener("DOMContentLoaded", () => {
     progress.style.width =
       `${Math.min(percent, 100)}%`;
   };
-
-  updateProgress();
-
-  window.addEventListener(
-    "scroll",
-    updateProgress,
-    { passive: true }
-  );
 
 
   /* =========================================================
@@ -154,14 +155,6 @@ document.addEventListener("DOMContentLoaded", () => {
     );
   };
 
-  updateBackToTop();
-
-  window.addEventListener(
-    "scroll",
-    updateBackToTop,
-    { passive: true }
-  );
-
   if (backToTop) {
     backToTop.addEventListener(
       "click",
@@ -176,52 +169,87 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
   /* =========================================================
-     SMOOTH SCROLL
+     OPTIMIZED SCROLL EVENTS
   ========================================================= */
 
-  $$('a[href^="#"]').forEach(
-    (link) => {
-      link.addEventListener(
-        "click",
-        (event) => {
-          const targetId =
-            link.getAttribute("href");
+  let scrollTicking = false;
 
-          if (
-            !targetId ||
-            targetId === "#"
-          ) {
-            return;
-          }
+  const handleScroll = () => {
+    if (!scrollTicking) {
+      window.requestAnimationFrame(() => {
+        updateHeader();
+        updateProgress();
+        updateBackToTop();
+        updateActiveNav();
 
-          const target =
-            $(targetId);
+        scrollTicking = false;
+      });
 
-          if (!target) return;
-
-          event.preventDefault();
-
-          const headerHeight =
-            header
-              ? header.offsetHeight
-              : 0;
-
-          const targetPosition =
-            target.getBoundingClientRect().top +
-            window.scrollY -
-            headerHeight -
-            10;
-
-          window.scrollTo({
-            top: targetPosition,
-            behavior: "smooth"
-          });
-
-          closeMenu();
-        }
-      );
+      scrollTicking = true;
     }
+  };
+
+  updateHeader();
+  updateProgress();
+  updateBackToTop();
+
+  window.addEventListener(
+    "scroll",
+    handleScroll,
+    { passive: true }
   );
+
+
+  /* =========================================================
+     ULTRA SMOOTH ANCHOR SCROLL
+  ========================================================= */
+
+  $$('a[href^="#"]').forEach((link) => {
+    link.addEventListener(
+      "click",
+      (event) => {
+        const targetId =
+          link.getAttribute("href");
+
+        if (
+          !targetId ||
+          targetId === "#"
+        ) {
+          return;
+        }
+
+        let target;
+
+        try {
+          target = $(targetId);
+        } catch {
+          return;
+        }
+
+        if (!target) return;
+
+        event.preventDefault();
+
+        const headerHeight =
+          header
+            ? header.offsetHeight
+            : 0;
+
+        const targetPosition =
+          target.getBoundingClientRect().top +
+          window.scrollY -
+          headerHeight -
+          12;
+
+        window.scrollTo({
+          top: Math.max(0, targetPosition),
+          behavior: "smooth"
+        });
+
+        closeMenu();
+      }
+    );
+  });
 
 
   /* =========================================================
@@ -232,7 +260,9 @@ document.addEventListener("DOMContentLoaded", () => {
     $$("main section[id]");
 
   const navLinks =
-    nav ? $$('a[href^="#"]', nav) : [];
+    nav
+      ? $$('a[href^="#"]', nav)
+      : [];
 
   const updateActiveNav = () => {
     if (
@@ -242,50 +272,47 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
 
-    let currentId = "";
+    const scrollPosition =
+      window.scrollY + 180;
+
+    let currentId =
+      sections[0]?.id || "";
 
     sections.forEach((section) => {
-      const top =
-        section.offsetTop - 180;
-
-      const bottom =
-        top + section.offsetHeight;
-
       if (
-        window.scrollY >= top &&
-        window.scrollY < bottom
+        scrollPosition >= section.offsetTop
       ) {
         currentId = section.id;
       }
     });
 
     navLinks.forEach((link) => {
+      const href =
+        link.getAttribute("href");
+
       link.classList.toggle(
         "current",
-        link.getAttribute("href") ===
-          `#${currentId}`
+        href === `#${currentId}`
       );
     });
   };
 
   updateActiveNav();
 
-  window.addEventListener(
-    "scroll",
-    updateActiveNav,
-    { passive: true }
-  );
-
 
   /* =========================================================
-     SINGLE ULTRA SMOOTH SCROLL REVEAL
-     ONE OBSERVER ONLY - NO DUPLICATE
+     SINGLE SMOOTH SCROLL REVEAL
+     ONLY ONE OBSERVER - NO DUPLICATE
   ========================================================= */
 
   const animatedElements = $$(
-    ".reveal, .reveal-left, .reveal-right, " +
-    ".reveal-zoom, .scroll-animate, " +
-    ".scroll-left, .scroll-right"
+    ".reveal, " +
+    ".reveal-left, " +
+    ".reveal-right, " +
+    ".reveal-zoom, " +
+    ".scroll-animate, " +
+    ".scroll-left, " +
+    ".scroll-right"
   );
 
   const showElement = (element) => {
@@ -317,8 +344,9 @@ document.addEventListener("DOMContentLoaded", () => {
           });
         },
         {
-          threshold: 0.12,
-          rootMargin: "0px 0px -50px 0px"
+          threshold: 0.08,
+          rootMargin:
+            "0px 0px -30px 0px"
         }
       );
 
@@ -329,6 +357,12 @@ document.addEventListener("DOMContentLoaded", () => {
   } else {
     animatedElements.forEach(showElement);
   }
+
+  /* Safety fallback */
+
+  setTimeout(() => {
+    animatedElements.forEach(showElement);
+  }, 2000);
 
 
   /* =========================================================
@@ -360,7 +394,7 @@ document.addEventListener("DOMContentLoaded", () => {
             charIndex
           );
 
-        let speed = 80;
+        let speed;
 
         if (!isDeleting) {
           if (
@@ -411,8 +445,7 @@ document.addEventListener("DOMContentLoaded", () => {
       "click",
       () => {
         const selectedFilter =
-          button.dataset.filter ||
-          "all";
+          button.dataset.filter || "all";
 
         filterButtons.forEach(
           (filterButton) => {
@@ -431,44 +464,37 @@ document.addEventListener("DOMContentLoaded", () => {
           }
         );
 
-        projectItems.forEach(
-          (project) => {
-            const category =
-              project.dataset.category;
+        projectItems.forEach((project) => {
+          const category =
+            project.dataset.category;
 
-            const shouldShow =
-              selectedFilter === "all" ||
-              category === selectedFilter;
+          const shouldShow =
+            selectedFilter === "all" ||
+            category === selectedFilter;
 
-            project.classList.toggle(
-              "is-hidden",
-              !shouldShow
+          project.classList.toggle(
+            "is-hidden",
+            !shouldShow
+          );
+
+          project.setAttribute(
+            "aria-hidden",
+            String(!shouldShow)
+          );
+
+          if (shouldShow) {
+            project.classList.remove(
+              "active",
+              "visible",
+              "is-visible",
+              "show"
             );
 
-            project.setAttribute(
-              "aria-hidden",
-              String(!shouldShow)
-            );
-
-            if (shouldShow) {
-              project.classList.remove(
-                "active",
-                "visible",
-                "is-visible",
-                "show"
-              );
-
-              requestAnimationFrame(() => {
-                project.classList.add(
-                  "active",
-                  "visible",
-                  "is-visible",
-                  "show"
-                );
-              });
-            }
+            requestAnimationFrame(() => {
+              showElement(project);
+            });
           }
-        );
+        });
       }
     );
   });
@@ -534,37 +560,35 @@ document.addEventListener("DOMContentLoaded", () => {
      PROJECT MOUSE GLOW
   ========================================================= */
 
-  $$(".portfolio-item").forEach(
-    (card) => {
-      card.addEventListener(
-        "pointermove",
-        (event) => {
-          const rect =
-            card.getBoundingClientRect();
+  $$(".portfolio-item").forEach((card) => {
+    card.addEventListener(
+      "pointermove",
+      (event) => {
+        const rect =
+          card.getBoundingClientRect();
 
-          const x =
-            ((event.clientX - rect.left) /
-              rect.width) *
-            100;
+        const x =
+          ((event.clientX - rect.left) /
+            rect.width) *
+          100;
 
-          const y =
-            ((event.clientY - rect.top) /
-              rect.height) *
-            100;
+        const y =
+          ((event.clientY - rect.top) /
+            rect.height) *
+          100;
 
-          card.style.setProperty(
-            "--mouse-x",
-            `${x}%`
-          );
+        card.style.setProperty(
+          "--mouse-x",
+          `${x}%`
+        );
 
-          card.style.setProperty(
-            "--mouse-y",
-            `${y}%`
-          );
-        }
-      );
-    }
-  );
+        card.style.setProperty(
+          "--mouse-y",
+          `${y}%`
+        );
+      }
+    );
+  });
 
 
   /* =========================================================
@@ -585,57 +609,54 @@ document.addEventListener("DOMContentLoaded", () => {
   let lastVideoTrigger = null;
 
 
-  const openProjectVideo =
-    (source, trigger) => {
-      if (
-        !videoModal ||
-        !videoPlayer ||
-        !source
-      ) {
-        return;
-      }
+  const openProjectVideo = (
+    source,
+    trigger
+  ) => {
+    if (
+      !videoModal ||
+      !videoPlayer ||
+      !source
+    ) {
+      return;
+    }
 
-      lastVideoTrigger =
-        trigger ||
-        document.activeElement;
+    lastVideoTrigger =
+      trigger ||
+      document.activeElement;
 
-      videoPlayer.pause();
-      videoPlayer.src = source;
+    videoPlayer.pause();
 
-      videoModal.classList.add(
-        "is-open"
-      );
+    videoPlayer.src = source;
 
-      videoModal.setAttribute(
-        "aria-hidden",
-        "false"
-      );
+    videoModal.classList.add(
+      "is-open"
+    );
 
-      document.body.style.overflow =
-        "hidden";
+    videoModal.setAttribute(
+      "aria-hidden",
+      "false"
+    );
 
-      videoPlayer.load();
+    document.body.style.overflow =
+      "hidden";
 
-      const playVideo = () => {
-        videoPlayer.play().catch(() => {
-          console.log(
-            "Video autoplay blocked."
-          );
-        });
-      };
+    videoPlayer.load();
 
-      if (
-        videoPlayer.readyState >= 3
-      ) {
-        playVideo();
-      } else {
-        videoPlayer.addEventListener(
-          "canplay",
-          playVideo,
-          { once: true }
+    const playVideo = () => {
+      videoPlayer.play().catch(() => {
+        console.log(
+          "Video autoplay blocked."
         );
-      }
+      });
     };
+
+    videoPlayer.addEventListener(
+      "canplay",
+      playVideo,
+      { once: true }
+    );
+  };
 
 
   const closeProjectVideo = () => {
@@ -648,6 +669,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     videoPlayer.pause();
     videoPlayer.currentTime = 0;
+
     videoPlayer.removeAttribute("src");
     videoPlayer.load();
 
@@ -674,32 +696,28 @@ document.addEventListener("DOMContentLoaded", () => {
   };
 
 
-  $$("[data-video]").forEach(
-    (button) => {
-      button.addEventListener(
-        "click",
-        (event) => {
-          event.preventDefault();
-          event.stopPropagation();
+  $$("[data-video]").forEach((button) => {
+    button.addEventListener(
+      "click",
+      (event) => {
+        event.preventDefault();
+        event.stopPropagation();
 
-          openProjectVideo(
-            button.dataset.video,
-            button
-          );
-        }
-      );
-    }
-  );
+        openProjectVideo(
+          button.dataset.video,
+          button
+        );
+      }
+    );
+  });
 
 
-  videoCloseButtons.forEach(
-    (button) => {
-      button.addEventListener(
-        "click",
-        closeProjectVideo
-      );
-    }
-  );
+  videoCloseButtons.forEach((button) => {
+    button.addEventListener(
+      "click",
+      closeProjectVideo
+    );
+  });
 
 
   if (videoModal) {
@@ -732,56 +750,67 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
   /* =========================================================
+     VIDEO ERROR
+  ========================================================= */
+
+  if (videoPlayer) {
+    videoPlayer.addEventListener(
+      "error",
+      () => {
+        console.error(
+          "Video could not be loaded:",
+          videoPlayer.currentSrc
+        );
+      }
+    );
+  }
+
+
+  /* =========================================================
      RIPPLE EFFECT
   ========================================================= */
 
-  const createRipple =
-    (button, event) => {
-      const rect =
-        button.getBoundingClientRect();
+  const createRipple = (
+    button,
+    event
+  ) => {
+    const rect =
+      button.getBoundingClientRect();
 
-      const size =
-        Math.max(
-          rect.width,
-          rect.height
-        );
-
-      const ripple =
-        document.createElement("span");
-
-      ripple.className = "ripple";
-
-      ripple.style.width =
-        `${size}px`;
-
-      ripple.style.height =
-        `${size}px`;
-
-      ripple.style.left =
-        `${
-          event.clientX -
-          rect.left -
-          size / 2
-        }px`;
-
-      ripple.style.top =
-        `${
-          event.clientY -
-          rect.top -
-          size / 2
-        }px`;
-
-      button
-        .querySelector(".ripple")
-        ?.remove();
-
-      button.appendChild(ripple);
-
-      ripple.addEventListener(
-        "animationend",
-        () => ripple.remove()
+    const size =
+      Math.max(
+        rect.width,
+        rect.height
       );
-    };
+
+    const ripple =
+      document.createElement("span");
+
+    ripple.className = "ripple";
+
+    ripple.style.width =
+      `${size}px`;
+
+    ripple.style.height =
+      `${size}px`;
+
+    ripple.style.left =
+      `${event.clientX - rect.left - size / 2}px`;
+
+    ripple.style.top =
+      `${event.clientY - rect.top - size / 2}px`;
+
+    button
+      .querySelector(".ripple")
+      ?.remove();
+
+    button.appendChild(ripple);
+
+    ripple.addEventListener(
+      "animationend",
+      () => ripple.remove()
+    );
+  };
 
 
   $$(".project-btn, .project-play").forEach(
