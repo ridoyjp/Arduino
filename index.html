@@ -97,20 +97,17 @@
       </div>
 
 
-       </div>
+      <div class="profile-visual reveal">
 
-  <div class="profile-visual reveal">
+        <div class="profile-shape"></div>
 
+        <img
+          src="assets/ridoy-profile.png"
+          alt="リドイのプロフィール写真"
+          class="profile-photo"
+        >
 
-    <div class="profile-shape"></div>
-
-    <img
-      src="assets/ridoy-profile.png"
-      alt="リドイのプロフィール写真"
-      class="profile-photo"
-    >
-
-  </div>
+      </div>
 
     </section>
 
@@ -158,10 +155,10 @@
             <strong>Web・ソフトウェア開発</strong>
           </div>
 
-           <div>
-             <small>日本語能力</small>
-             <strong>JLPT N2 合格</strong>
-           </div>
+          <div>
+            <small>日本語能力</small>
+            <strong>JLPT N2 合格</strong>
+          </div>
 
           <div>
             <small>目標</small>
@@ -319,7 +316,9 @@
         <div class="portfolio-wrap" aria-live="polite">
 
 
-          <!-- PROJECT 01 -->
+          <!-- =========================
+               PROJECT 01
+          ========================== -->
           <article
             class="portfolio-item project-featured reveal-zoom"
             data-category="frontend"
@@ -394,7 +393,9 @@
           </article>
 
 
-          <!-- PROJECT 02 -->
+          <!-- =========================
+               PROJECT 02
+          ========================== -->
           <article
             class="portfolio-item reveal-zoom delay-1"
             data-category="java"
@@ -472,7 +473,9 @@
           </article>
 
 
-          <!-- PROJECT 03 -->
+          <!-- =========================
+               PROJECT 03
+          ========================== -->
           <article
             class="portfolio-item reveal-zoom delay-2"
             data-category="frontend"
@@ -482,9 +485,7 @@
             aria-label="JavaScriptゲームを開く"
           >
 
-            <div
-              class="portfolio-image project-image-contain"
-            >
+            <div class="portfolio-image project-image-contain">
 
               <img
                 src="assets/game.png"
@@ -544,15 +545,15 @@
           </article>
 
 
-          <!-- PROJECT 04 -->
+          <!-- =========================
+               PROJECT 04
+          ========================== -->
           <article
             class="portfolio-item reveal-zoom delay-3"
             data-category="hardware"
           >
 
-            <div
-              class="portfolio-image project-image-portrait"
-            >
+            <div class="portfolio-image project-image-portrait">
 
               <img
                 src="assets/arduino-poster.jpg"
@@ -972,8 +973,6 @@
 
   <!-- =========================
        VIDEO MODAL
-       IMPORTANT:
-       videoClose ID is used ONLY ONCE
   ========================== -->
   <div
     class="video-modal"
@@ -988,7 +987,10 @@
       aria-labelledby="videoModalTitle"
     >
 
-      <h2 id="videoModalTitle" class="sr-only">
+      <h2
+        id="videoModalTitle"
+        class="sr-only"
+      >
         プロジェクト紹介動画
       </h2>
 
@@ -1001,10 +1003,14 @@
         ✕
       </button>
 
+      <!-- =========================
+           MOBILE FRIENDLY VIDEO
+      ========================== -->
       <video
         id="projectVideo"
         controls
         playsinline
+        webkit-playsinline
         preload="metadata"
       >
         お使いのブラウザは動画再生に対応していません。

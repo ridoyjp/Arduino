@@ -428,8 +428,6 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
 
-  /* Safety fallback */
-
   setTimeout(() => {
 
     animatedElements.forEach(showElement);
@@ -679,6 +677,54 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
   /* =========================================================
+     VIDEO SOURCE NORMALIZATION
+  ========================================================= */
+
+  const getVideoURL = (source) => {
+
+    if (!source) return "";
+
+    try {
+
+      return new URL(
+        source,
+        window.location.href
+      ).href;
+
+    } catch {
+
+      return source;
+
+    }
+
+  };
+
+
+  /* =========================================================
+     SHOW VIDEO ERROR
+  ========================================================= */
+
+  const showVideoError = (message) => {
+
+    console.error(
+      "Video error:",
+      message
+    );
+
+
+    if (videoError) {
+
+      videoError.hidden = false;
+
+      videoError.textContent =
+        "動画を読み込めませんでした。動画ファイルのパスを確認してください。";
+
+    }
+
+  };
+
+
+  /* =========================================================
      OPEN VIDEO
   ========================================================= */
 
@@ -707,26 +753,80 @@ document.addEventListener("DOMContentLoaded", () => {
       trigger || document.activeElement;
 
 
+    const videoURL =
+      getVideoURL(source);
+
+
+    console.log(
+      "Opening video:",
+      videoURL
+    );
+
+
+    /* Clear previous error */
+
     if (videoError) {
 
       videoError.hidden = true;
+
+      videoError.textContent =
+        "動画を読み込めませんでした。";
 
     }
 
 
     /* Stop old video */
 
-    videoPlayer.pause();
+    try {
+
+      videoPlayer.pause();
+
+    } catch {}
 
 
-    /* Reset old source */
+    /*
+      IMPORTANT:
+      Direct src assignment works more reliably
+      on Android/iPhone than repeatedly injecting
+      <source> elements.
+    */
 
     videoPlayer.removeAttribute("src");
 
+    videoPlayer.load();
 
-    /* Set new source */
 
-    videoPlayer.src = source;
+    /*
+      Mobile compatibility
+    */
+
+    videoPlayer.setAttribute(
+      "playsinline",
+      ""
+    );
+
+    videoPlayer.setAttribute(
+      "webkit-playsinline",
+      ""
+    );
+
+    videoPlayer.setAttribute(
+      "controls",
+      ""
+    );
+
+
+    /*
+      We DO NOT force autoplay.
+      Some mobile browsers block autoplay.
+    */
+
+    videoPlayer.muted = false;
+
+
+    /* Set new video */
+
+    videoPlayer.src = videoURL;
 
 
     /* Open modal */
@@ -741,8 +841,6 @@ document.addEventListener("DOMContentLoaded", () => {
     );
 
 
-    /* Disable background scroll */
-
     document.body.style.overflow =
       "hidden";
 
@@ -752,26 +850,55 @@ document.addEventListener("DOMContentLoaded", () => {
     videoPlayer.load();
 
 
-    /* Try autoplay after video can play */
+    /*
+      Try to start after metadata
+      has loaded.
+
+      If mobile browser blocks it,
+      user can simply press ▶.
+    */
 
     const tryPlay = () => {
 
-      videoPlayer.play().catch(() => {
+      const playPromise =
+        videoPlayer.play();
 
-        console.log(
-          "Autoplay blocked. Please press play."
-        );
 
-      });
+      if (
+        playPromise &&
+        typeof playPromise.catch ===
+        "function"
+      ) {
+
+        playPromise.catch((error) => {
+
+          console.log(
+            "Autoplay blocked:",
+            error
+          );
+
+        });
+
+      }
 
     };
 
 
-    videoPlayer.addEventListener(
-      "canplay",
-      tryPlay,
-      { once: true }
-    );
+    if (
+      videoPlayer.readyState >= 2
+    ) {
+
+      tryPlay();
+
+    } else {
+
+      videoPlayer.addEventListener(
+        "loadeddata",
+        tryPlay,
+        { once: true }
+      );
+
+    }
 
   };
 
@@ -786,15 +913,29 @@ document.addEventListener("DOMContentLoaded", () => {
       !videoModal ||
       !videoPlayer
     ) {
+
       return;
+
     }
 
 
-    videoPlayer.pause();
+    try {
 
-    videoPlayer.currentTime = 0;
+      videoPlayer.pause();
 
-    videoPlayer.removeAttribute("src");
+    } catch {}
+
+
+    try {
+
+      videoPlayer.currentTime = 0;
+
+    } catch {}
+
+
+    videoPlayer.removeAttribute(
+      "src"
+    );
 
     videoPlayer.load();
 
@@ -826,7 +967,11 @@ document.addEventListener("DOMContentLoaded", () => {
       "function"
     ) {
 
-      lastVideoTrigger.focus();
+      try {
+
+        lastVideoTrigger.focus();
+
+      } catch {}
 
     }
 
@@ -842,8 +987,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const getCardVideoSource = (card) => {
 
-    /* Video directly on card */
-
     if (card.dataset.video) {
 
       return card.dataset.video;
@@ -851,10 +994,10 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
 
-    /* Video button inside card */
-
     const videoElement =
-      card.querySelector("[data-video]");
+      card.querySelector(
+        "[data-video]"
+      );
 
 
     if (
@@ -878,16 +1021,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const getCardLink = (card) => {
 
-    /* data-link on card */
-
     if (card.dataset.link) {
 
       return card.dataset.link;
 
     }
 
-
-    /* Find normal project link */
 
     const projectLink =
       card.querySelector(
@@ -940,7 +1079,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
     } else {
 
-      window.location.href = link;
+      window.location.href =
+        link;
 
     }
 
@@ -949,10 +1089,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   /* =========================================================
      OPEN PROJECT
-     
-     PRIORITY:
-     1. VIDEO
-     2. LINK
+     VIDEO > LINK
   ========================================================= */
 
   const openProject = (
@@ -967,8 +1104,6 @@ document.addEventListener("DOMContentLoaded", () => {
       getCardLink(card);
 
 
-    /* Video project */
-
     if (videoSource) {
 
       openProjectVideo(
@@ -980,8 +1115,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
     }
 
-
-    /* Website / Game project */
 
     if (projectLink) {
 
@@ -996,14 +1129,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
   /* =========================================================
-     FULL PROJECT CARD CLICK
-     
-     CLICK ANYWHERE:
-     
-     PROJECT 01 → WEBSITE
-     PROJECT 02 → VIDEO
-     PROJECT 03 → GAME
-     PROJECT 04 → VIDEO
+     PROJECT CARD CLICK
   ========================================================= */
 
   $$(".portfolio-item").forEach((card) => {
@@ -1015,23 +1141,24 @@ document.addEventListener("DOMContentLoaded", () => {
       getCardLink(card);
 
 
-    /* No action if project has neither */
-
     if (
       !videoSource &&
       !projectLink
     ) {
+
       return;
+
     }
 
 
-    card.style.cursor = "pointer";
+    card.style.cursor =
+      "pointer";
 
-
-    /* Accessibility */
 
     if (
-      !card.hasAttribute("tabindex")
+      !card.hasAttribute(
+        "tabindex"
+      )
     ) {
 
       card.setAttribute(
@@ -1042,18 +1169,9 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
 
-    /* =====================================================
-       CLICK ANYWHERE ON CARD
-    ===================================================== */
-
     card.addEventListener(
       "click",
       (event) => {
-
-        /*
-         * If user clicked a real link,
-         * allow the link to work normally.
-         */
 
         const clickedLink =
           event.target.closest(
@@ -1067,11 +1185,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
         }
 
-
-        /*
-         * If user clicked data-video button,
-         * its own handler will open video.
-         */
 
         const clickedVideoButton =
           event.target.closest(
@@ -1098,11 +1211,6 @@ document.addEventListener("DOMContentLoaded", () => {
     );
 
 
-    /* =====================================================
-       KEYBOARD
-       ENTER / SPACE
-    ===================================================== */
-
     card.addEventListener(
       "keydown",
       (event) => {
@@ -1111,7 +1219,9 @@ document.addEventListener("DOMContentLoaded", () => {
           event.key !== "Enter" &&
           event.key !== " "
         ) {
+
           return;
+
         }
 
 
@@ -1160,9 +1270,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
   /* =========================================================
-     NORMAL PROJECT LINK
-     
-     Prevents card click conflict.
+     NORMAL PROJECT LINKS
   ========================================================= */
 
   $$(".portfolio-item a[href]").forEach((link) => {
@@ -1202,7 +1310,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
   /* =========================================================
-     CLICK OUTSIDE VIDEO → CLOSE
+     CLICK OUTSIDE VIDEO
   ========================================================= */
 
   if (videoModal) {
@@ -1212,7 +1320,8 @@ document.addEventListener("DOMContentLoaded", () => {
       (event) => {
 
         if (
-          event.target === videoModal
+          event.target ===
+          videoModal
         ) {
 
           closeProjectVideo();
@@ -1249,29 +1358,55 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
   /* =========================================================
-     VIDEO ERROR
+     VIDEO EVENTS
   ========================================================= */
 
   if (videoPlayer) {
 
     videoPlayer.addEventListener(
-      "error",
+      "loadedmetadata",
       () => {
 
-        console.error(
-          "Video could not be loaded:",
+        console.log(
+          "Video metadata loaded:",
           videoPlayer.currentSrc
         );
 
+      }
+    );
 
-        if (videoError) {
 
-          videoError.hidden = false;
+    videoPlayer.addEventListener(
+      "canplay",
+      () => {
 
-          videoError.textContent =
-            "動画を読み込めませんでした。動画ファイルのパスを確認してください。";
+        console.log(
+          "Video can play:",
+          videoPlayer.currentSrc
+        );
 
-        }
+      }
+    );
+
+
+    videoPlayer.addEventListener(
+      "error",
+      () => {
+
+        const mediaError =
+          videoPlayer.error;
+
+
+        console.error(
+          "Video could not be loaded:",
+          videoPlayer.currentSrc,
+          mediaError
+        );
+
+
+        showVideoError(
+          mediaError
+        );
 
       }
     );
@@ -1291,6 +1426,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const rect =
       button.getBoundingClientRect();
 
+
     const size =
       Math.max(
         rect.width,
@@ -1299,7 +1435,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
     const ripple =
-      document.createElement("span");
+      document.createElement(
+        "span"
+      );
 
 
     ripple.className =
@@ -1312,11 +1450,17 @@ document.addEventListener("DOMContentLoaded", () => {
     ripple.style.height =
       `${size}px`;
 
+
     ripple.style.left =
-      `${event.clientX - rect.left - size / 2}px`;
+      `${event.clientX -
+        rect.left -
+        size / 2}px`;
+
 
     ripple.style.top =
-      `${event.clientY - rect.top - size / 2}px`;
+      `${event.clientY -
+        rect.top -
+        size / 2}px`;
 
 
     button
@@ -1324,7 +1468,9 @@ document.addEventListener("DOMContentLoaded", () => {
       ?.remove();
 
 
-    button.appendChild(ripple);
+    button.appendChild(
+      ripple
+    );
 
 
     ripple.addEventListener(
@@ -1375,13 +1521,16 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
         const name =
-          $("#name")?.value.trim() || "";
+          $("#name")?.value.trim() ||
+          "";
 
         const email =
-          $("#email")?.value.trim() || "";
+          $("#email")?.value.trim() ||
+          "";
 
         const message =
-          $("#message")?.value.trim() || "";
+          $("#message")?.value.trim() ||
+          "";
 
 
         if (

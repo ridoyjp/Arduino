@@ -54,8 +54,16 @@ body {
   overflow-x: hidden;
 
   background:
-    radial-gradient(circle at 90% 0%, rgba(57, 217, 194, 0.08), transparent 28%),
-    radial-gradient(circle at 0% 35%, rgba(97, 174, 247, 0.05), transparent 25%),
+    radial-gradient(
+      circle at 90% 0%,
+      rgba(57, 217, 194, 0.08),
+      transparent 28%
+    ),
+    radial-gradient(
+      circle at 0% 35%,
+      rgba(97, 174, 247, 0.05),
+      transparent 25%
+    ),
     var(--bg);
 
   color: var(--text);
@@ -772,7 +780,9 @@ main {
   letter-spacing: 0.12em;
 }
 
-/* FILTER */
+/* =========================================================
+   FILTER
+========================================================= */
 
 .project-filters {
   display: flex;
@@ -819,7 +829,9 @@ main {
   background: var(--primary);
 }
 
-/* PROJECT LIST */
+/* =========================================================
+   PROJECT LIST
+========================================================= */
 
 .portfolio-wrap {
   display: grid;
@@ -872,7 +884,9 @@ main {
   background: var(--primary);
 }
 
-/* IMAGE */
+/* =========================================================
+   IMAGE
+========================================================= */
 
 .portfolio-image {
   position: relative;
@@ -922,7 +936,9 @@ main {
   padding: 1.5rem;
 }
 
-/* PROJECT TOP */
+/* =========================================================
+   PROJECT TOP
+========================================================= */
 
 .project-media-top {
   position: absolute;
@@ -980,7 +996,9 @@ main {
   box-shadow: 0 0 10px rgba(97, 174, 247, 0.7);
 }
 
-/* PLAY BUTTON */
+/* =========================================================
+   PLAY BUTTON
+========================================================= */
 
 .project-play {
   position: absolute;
@@ -1007,7 +1025,9 @@ main {
   box-shadow: 0 8px 25px var(--primary-glow);
 }
 
-/* PROJECT CONTENT */
+/* =========================================================
+   PROJECT CONTENT
+========================================================= */
 
 .portfolio-content {
   position: relative;
@@ -1606,30 +1626,25 @@ footer {
     transform 0.9s var(--ease);
 }
 
-/* Bottom */
 .reveal,
 .scroll-animate {
   transform: translateY(45px);
 }
 
-/* Left */
 .reveal-left,
 .scroll-left {
   transform: translateX(-45px);
 }
 
-/* Right */
 .reveal-right,
 .scroll-right {
   transform: translateX(45px);
 }
 
-/* Zoom */
 .reveal-zoom {
   transform: translateY(35px) scale(0.96);
 }
 
-/* Visible */
 .reveal.active,
 .reveal.visible,
 .reveal-left.active,
@@ -1650,7 +1665,10 @@ footer {
   transform: translateY(0) scale(1);
 }
 
-/* Animation delays */
+/* =========================================================
+   ANIMATION DELAYS
+========================================================= */
+
 .delay-1 {
   transition-delay: 0.08s;
 }
@@ -1753,6 +1771,7 @@ footer {
   }
 
   @keyframes profileFloatTablet {
+
     0%,
     100% {
       transform: translate(20px, 5px);
@@ -1856,6 +1875,8 @@ footer {
     margin-bottom: 2.5rem;
   }
 
+  /* HERO */
+
   .profile-hero {
     min-height: auto;
 
@@ -1900,6 +1921,7 @@ footer {
   }
 
   @keyframes profileFloatMobile {
+
     0%,
     100% {
       transform: translate(0, 5px);
@@ -1916,15 +1938,21 @@ footer {
     font-size: 0.65rem;
   }
 
+  /* ABOUT / TEAM / CONTACT */
+
   .about-grid,
   .team-layout,
   .contact-grid {
     grid-template-columns: 1fr;
   }
 
+  /* SKILLS */
+
   .skills-grid {
     grid-template-columns: repeat(2, 1fr);
   }
+
+  /* PROJECTS */
 
   .projects-section {
     padding-top: 80px;
@@ -1989,14 +2017,20 @@ footer {
     gap: 0.5rem 0.8rem;
   }
 
+  /* STRENGTH */
+
   .strength-grid {
     grid-template-columns: 1fr;
   }
+
+  /* GITHUB */
 
   .github-card {
     flex-direction: column;
     align-items: flex-start;
   }
+
+  /* FOOTER */
 
   footer {
     flex-direction: column;
@@ -2035,6 +2069,7 @@ footer {
   }
 
   @keyframes profileFloatSmall {
+
     0%,
     100% {
       transform: translate(0, 3px);
@@ -2106,6 +2141,87 @@ footer {
   #backToTop {
     right: 16px;
     bottom: 16px;
+  }
+}
+
+/* =========================================================
+   VIDEO — MOBILE FIX
+========================================================= */
+
+@media (max-width: 760px) {
+
+  .video-modal,
+  .project-video-modal {
+    padding: 0.7rem;
+  }
+
+  .video-modal-content,
+  .project-video-modal-box {
+    width: 100%;
+    max-width: 100%;
+    max-height: 90vh;
+    padding: 0.35rem;
+    border-radius: 12px;
+  }
+
+  .video-modal video,
+  .project-video-modal video {
+    width: 100%;
+    height: auto;
+    max-width: 100%;
+    max-height: 78vh;
+    object-fit: contain;
+    border-radius: 9px;
+  }
+
+  .video-close,
+  .close-video,
+  .project-video-close {
+    top: -8px;
+    right: -5px;
+
+    width: 36px;
+    height: 36px;
+
+    font-size: 0.9rem;
+  }
+
+  .project-play {
+    min-height: 42px;
+    padding: 0.65rem 0.85rem;
+
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+  }
+}
+
+/* =========================================================
+   TOUCH DEVICE
+========================================================= */
+
+@media (hover: none) and (pointer: coarse) {
+
+  .portfolio-item:hover,
+  .skill:hover,
+  .strength:hover,
+  .facts > div:hover,
+  .process > div:hover,
+  .future:hover,
+  .github-card:hover {
+    transform: none;
+  }
+
+  .portfolio-item:hover .portfolio-image img {
+    transform: none;
+  }
+
+  nav a:hover {
+    transform: none;
+  }
+
+  .project-play:hover {
+    transform: none;
+    box-shadow: none;
   }
 }
 
